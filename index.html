@@ -67,7 +67,7 @@
       </button>
     </div>
 
-    <div id="video-call">
+    <div id="video-call" style="display: none">
       <div id="user-list">
         <h3>Participants</h3>
         <ul id="users"></ul>
@@ -85,6 +85,7 @@
         signInWithPopup,
         GoogleAuthProvider,
         GithubAuthProvider,
+        fetchSignInMethodsForEmail,
       } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
       const firebaseConfig = {
@@ -101,6 +102,12 @@
       const auth = getAuth(app);
       const googleProvider = new GoogleAuthProvider();
       const githubProvider = new GithubAuthProvider();
+
+      const users = [];
+      const userList = document.getElementById("users");
+      const loginContainer = document.getElementById("login-container");
+      const videoCallContainer = document.getElementById("video-call");
+      const exitButton = document.getElementById("exit-btn");
 
       document
         .getElementById("google-login-btn")
@@ -120,7 +127,19 @@
             const result = await signInWithPopup(auth, githubProvider);
             handleLoginSuccess(result.user);
           } catch (error) {
-            console.error("GitHub Login Error:", error.message);
+            if (
+              error.code === "auth/account-exists-with-different-credential"
+            ) {
+              const email = error.customData.email;
+              const providers = await fetchSignInMethodsForEmail(auth, email);
+              alert(
+                `Email này đã được đăng ký với phương thức khác: ${providers.join(
+                  ", "
+                )}`
+              );
+            } else {
+              console.error("GitHub Login Error:", error.message);
+            }
           }
         });
 
@@ -131,10 +150,13 @@
         loginContainer.style.display = "none";
         videoCallContainer.style.display = "flex";
 
-        callFrame = window.DailyIframe.createFrame(videoFrame, {
-          showLeaveButton: false,
-          iframeStyle: { width: "100%", height: "100%", border: "none" },
-        });
+        callFrame = window.DailyIframe.createFrame(
+          document.getElementById("video-frame"),
+          {
+            showLeaveButton: false,
+            iframeStyle: { width: "100%", height: "100%", border: "none" },
+          }
+        );
 
         callFrame.join({
           url: "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK",
@@ -150,7 +172,7 @@
         if (callFrame) {
           callFrame.destroy();
         }
-        users = [];
+        users.length = 0;
         updateUserList();
         videoCallContainer.style.display = "none";
         loginContainer.style.display = "flex";
