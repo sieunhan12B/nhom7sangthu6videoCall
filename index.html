@@ -134,18 +134,39 @@
     </div>
 
     <script src="https://unpkg.com/@daily-co/daily-js"></script>
+    <script>
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: "1627979758085816",
+          cookie: true,
+          xfbml: true,
+          version: "v22.0",
+        });
+        FB.AppEvents.logPageView();
+      };
+
+      (function (d, s, id) {
+        var js,
+          fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {
+          return;
+        }
+        js = d.createElement(s);
+        js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      })(document, "script", "facebook-jssdk");
+    </script>
+
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
       import {
         getAuth,
         signInWithPopup,
-        signInWithRedirect,
-        getRedirectResult,
         GoogleAuthProvider,
         FacebookAuthProvider,
       } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
-      // Cấu hình Firebase
       const firebaseConfig = {
         apiKey: "AIzaSyB72B3qz-dP5yGdMTWGr_fzCbJNrQmWmaM",
         authDomain: "nhom7sangthu6-2e22f.firebaseapp.com",
@@ -161,10 +182,8 @@
       const googleProvider = new GoogleAuthProvider();
       const facebookProvider = new FacebookAuthProvider();
 
-      // URL phòng Daily.co
       const ROOM_URL = "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK";
 
-      // Lấy phần tử giao diện
       const loginContainer = document.getElementById("login-container");
       const videoCallContainer = document.getElementById("video-call");
       const googleLoginButton = document.getElementById("google-login-btn");
@@ -176,28 +195,25 @@
       let callFrame;
       let users = [];
 
-      // Đăng nhập Google
       googleLoginButton.addEventListener("click", async () => {
         try {
           const result = await signInWithPopup(auth, googleProvider);
           handleLoginSuccess(result.user);
         } catch (error) {
-          console.error("❌ Google Login Error:", error);
+          console.error("Google Login Error:", error);
         }
       });
 
-      // Đăng nhập Facebook
       facebookLoginButton.addEventListener("click", async () => {
         try {
           const result = await signInWithPopup(auth, facebookProvider);
           handleLoginSuccess(result.user);
         } catch (error) {
-          console.error("❌ Facebook Login Error:", error);
+          console.error("Facebook Login Error:", error);
         }
       });
 
       function handleLoginSuccess(user) {
-        console.log("User Info:", user);
         const userName = user.displayName || "Guest";
         users.push(userName);
         updateUserList();
@@ -206,35 +222,14 @@
 
         callFrame = window.DailyIframe.createFrame(videoFrame, {
           showLeaveButton: false,
-          iframeStyle: {
-            width: "100%",
-            height: "100%",
-            border: "none",
-          },
+          iframeStyle: { width: "100%", height: "100%", border: "none" },
         });
 
-        callFrame.join({
-          url: ROOM_URL,
-          userName: userName,
-        });
+        callFrame.join({ url: ROOM_URL, userName });
       }
 
-      exitButton.addEventListener("click", () => {
-        if (callFrame) {
-          callFrame.leave();
-          callFrame.destroy();
-        }
-        videoCallContainer.style.display = "none";
-        loginContainer.style.display = "flex";
-      });
-
       function updateUserList() {
-        userList.innerHTML = "";
-        users.forEach((user) => {
-          const li = document.createElement("li");
-          li.textContent = user;
-          userList.appendChild(li);
-        });
+        userList.innerHTML = users.map((user) => `<li>${user}</li>`).join("");
       }
     </script>
   </body>
