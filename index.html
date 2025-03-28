@@ -127,7 +127,8 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
       import {
         getAuth,
-        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult,
         GoogleAuthProvider,
       } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
@@ -160,44 +161,50 @@
       let callFrame;
       let users = [];
 
-      // Đăng nhập với Google
-      loginButton.addEventListener("click", async () => {
-        try {
-          const result = await signInWithPopup(auth, googleProvider);
-          const user = result.user;
-          console.log("User Info:", user);
-
-          // Lưu tên người dùng từ Firebase
-          const userName = user.displayName || "Guest";
-
-          // Cập nhật danh sách người dùng
-          users.push(userName);
-          updateUserList();
-
-          // Chuyển sang màn hình video call
-          loginContainer.style.display = "none";
-          videoCallContainer.style.display = "flex";
-
-          // Tạo iframe cho Daily.co và truyền tên user
-          callFrame = window.DailyIframe.createFrame(videoFrame, {
-            showLeaveButton: false,
-            iframeStyle: {
-              width: "100%",
-              height: "100%",
-              border: "none",
-            },
-          });
-
-          // Tham gia phòng và truyền tên người dùng
-          callFrame.join({
-            url: ROOM_URL,
-            userName: userName, // ✅ Truyền tên Google vào Daily.co
-          });
-        } catch (error) {
-          console.error("Error during sign-in:", error);
-          alert("Failed to sign in. Please try again.");
-        }
+      // Đăng nhập với Google (dùng redirect thay vì popup)
+      loginButton.addEventListener("click", () => {
+        signInWithRedirect(auth, googleProvider);
       });
+
+      // Xử lý kết quả đăng nhập sau khi redirect
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            const user = result.user;
+            console.log("User Info:", user);
+
+            // Lưu tên người dùng từ Firebase
+            const userName = user.displayName || "Guest";
+
+            // Cập nhật danh sách người dùng
+            users.push(userName);
+            updateUserList();
+
+            // Chuyển sang màn hình video call
+            loginContainer.style.display = "none";
+            videoCallContainer.style.display = "flex";
+
+            // Tạo iframe cho Daily.co và truyền tên user
+            callFrame = window.DailyIframe.createFrame(videoFrame, {
+              showLeaveButton: false,
+              iframeStyle: {
+                width: "100%",
+                height: "100%",
+                border: "none",
+              },
+            });
+
+            // Tham gia phòng và truyền tên người dùng
+            callFrame.join({
+              url: ROOM_URL,
+              userName: userName, // ✅ Truyền tên Google vào Daily.co
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Login error:", error);
+          alert("Login failed: " + error.message);
+        });
 
       // Thoát phòng video call
       exitButton.addEventListener("click", () => {
