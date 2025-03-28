@@ -49,66 +49,11 @@
       button:hover {
         background-color: #357ae8;
       }
-      .facebook-btn {
-        background-color: #1877f2;
+      .github-btn {
+        background-color: #333;
       }
-      .facebook-btn:hover {
-        background-color: #145dbf;
-      }
-      #video-call {
-        display: none;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100vh;
-        position: relative;
-      }
-      #video-frame {
-        width: 80%;
-        height: 70%;
-        background: black;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
-      }
-      #controls {
-        margin-top: 15px;
-        display: flex;
-        gap: 15px;
-      }
-      .control-btn {
-        background: #ff3b30;
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        transition: 0.3s;
-      }
-      .control-btn:hover {
-        background: #e6392c;
-      }
-      #user-list {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(0, 0, 0, 0.8);
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0px 2px 10px rgba(255, 255, 255, 0.2);
-      }
-      #user-list h3 {
-        font-size: 18px;
-        margin-bottom: 10px;
-      }
-      #user-list ul {
-        list-style: none;
-        padding: 0;
-      }
-      #user-list li {
-        font-size: 16px;
-        padding: 5px 0;
+      .github-btn:hover {
+        background-color: #222;
       }
     </style>
   </head>
@@ -117,8 +62,8 @@
 
     <div id="login-container">
       <button id="google-login-btn">Sign in with Google</button>
-      <button id="facebook-login-btn" class="facebook-btn">
-        Sign in with Facebook
+      <button id="github-login-btn" class="github-btn">
+        Sign in with GitHub
       </button>
     </div>
 
@@ -133,38 +78,13 @@
       </div>
     </div>
 
-    <script src="https://unpkg.com/@daily-co/daily-js"></script>
-    <script>
-      window.fbAsyncInit = function () {
-        FB.init({
-          appId: "1627979758085816",
-          cookie: true,
-          xfbml: true,
-          version: "v22.0",
-        });
-        FB.AppEvents.logPageView();
-      };
-
-      (function (d, s, id) {
-        var js,
-          fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {
-          return;
-        }
-        js = d.createElement(s);
-        js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-      })(document, "script", "facebook-jssdk");
-    </script>
-
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
       import {
         getAuth,
         signInWithPopup,
         GoogleAuthProvider,
-        FacebookAuthProvider,
+        GithubAuthProvider,
       } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
       const firebaseConfig = {
@@ -180,43 +100,29 @@
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const googleProvider = new GoogleAuthProvider();
-      const facebookProvider = new FacebookAuthProvider();
+      const githubProvider = new GithubAuthProvider();
 
-      // Thêm scope nếu cần (ví dụ: để lấy thêm thông tin từ Facebook)
-      facebookProvider.addScope("public_profile");
+      document
+        .getElementById("google-login-btn")
+        .addEventListener("click", async () => {
+          try {
+            const result = await signInWithPopup(auth, googleProvider);
+            handleLoginSuccess(result.user);
+          } catch (error) {
+            console.error("Google Login Error:", error.message);
+          }
+        });
 
-      const ROOM_URL = "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK";
-
-      const loginContainer = document.getElementById("login-container");
-      const videoCallContainer = document.getElementById("video-call");
-      const googleLoginButton = document.getElementById("google-login-btn");
-      const facebookLoginButton = document.getElementById("facebook-login-btn");
-      const exitButton = document.getElementById("exit-btn");
-      const userList = document.getElementById("users");
-      const videoFrame = document.getElementById("video-frame");
-
-      let callFrame;
-      let users = [];
-
-      googleLoginButton.addEventListener("click", async () => {
-        try {
-          const result = await signInWithPopup(auth, googleProvider);
-          handleLoginSuccess(result.user);
-        } catch (error) {
-          console.error("Google Login Error:", error.message, error.code);
-          alert("Google Login Failed: " + error.message);
-        }
-      });
-
-      facebookLoginButton.addEventListener("click", async () => {
-        try {
-          const result = await signInWithPopup(auth, facebookProvider);
-          handleLoginSuccess(result.user);
-        } catch (error) {
-          console.error("Facebook Login Error:", error.message, error.code);
-          alert("Facebook Login Failed: " + error.message);
-        }
-      });
+      document
+        .getElementById("github-login-btn")
+        .addEventListener("click", async () => {
+          try {
+            const result = await signInWithPopup(auth, githubProvider);
+            handleLoginSuccess(result.user);
+          } catch (error) {
+            console.error("GitHub Login Error:", error.message);
+          }
+        });
 
       function handleLoginSuccess(user) {
         const userName = user.displayName || "Guest";
@@ -230,7 +136,10 @@
           iframeStyle: { width: "100%", height: "100%", border: "none" },
         });
 
-        callFrame.join({ url: ROOM_URL, userName });
+        callFrame.join({
+          url: "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK",
+          userName,
+        });
       }
 
       function updateUserList() {
