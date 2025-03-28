@@ -182,6 +182,9 @@
       const googleProvider = new GoogleAuthProvider();
       const facebookProvider = new FacebookAuthProvider();
 
+      // Thêm scope nếu cần (ví dụ: để lấy thêm thông tin từ Facebook)
+      facebookProvider.addScope("public_profile");
+
       const ROOM_URL = "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK";
 
       const loginContainer = document.getElementById("login-container");
@@ -200,7 +203,8 @@
           const result = await signInWithPopup(auth, googleProvider);
           handleLoginSuccess(result.user);
         } catch (error) {
-          console.error("Google Login Error:", error);
+          console.error("Google Login Error:", error.message, error.code);
+          alert("Google Login Failed: " + error.message);
         }
       });
 
@@ -209,7 +213,8 @@
           const result = await signInWithPopup(auth, facebookProvider);
           handleLoginSuccess(result.user);
         } catch (error) {
-          console.error("Facebook Login Error:", error);
+          console.error("Facebook Login Error:", error.message, error.code);
+          alert("Facebook Login Failed: " + error.message);
         }
       });
 
@@ -231,6 +236,16 @@
       function updateUserList() {
         userList.innerHTML = users.map((user) => `<li>${user}</li>`).join("");
       }
+
+      exitButton.addEventListener("click", () => {
+        if (callFrame) {
+          callFrame.destroy();
+        }
+        users = [];
+        updateUserList();
+        videoCallContainer.style.display = "none";
+        loginContainer.style.display = "flex";
+      });
     </script>
   </body>
 </html>
