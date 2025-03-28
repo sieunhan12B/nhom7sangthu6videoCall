@@ -30,8 +30,10 @@
       }
       #login-container {
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
+        gap: 15px;
         height: 60vh;
       }
       button {
@@ -46,6 +48,12 @@
       }
       button:hover {
         background-color: #357ae8;
+      }
+      .facebook-btn {
+        background-color: #1877f2;
+      }
+      .facebook-btn:hover {
+        background-color: #145dbf;
       }
       #video-call {
         display: none;
@@ -108,7 +116,10 @@
     <header>Video Call App</header>
 
     <div id="login-container">
-      <button id="login-btn">Sign in with Google</button>
+      <button id="google-login-btn">Sign in with Google</button>
+      <button id="facebook-login-btn" class="facebook-btn">
+        Sign in with Facebook
+      </button>
     </div>
 
     <div id="video-call">
@@ -131,6 +142,7 @@
         signInWithRedirect,
         getRedirectResult,
         GoogleAuthProvider,
+        FacebookAuthProvider,
       } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
 
       // Cấu hình Firebase
@@ -147,6 +159,7 @@
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const googleProvider = new GoogleAuthProvider();
+      const facebookProvider = new FacebookAuthProvider();
 
       // URL phòng Daily.co
       const ROOM_URL = "https://chunchunchun.daily.co/icbIpwVdShf6NWuhCgcK";
@@ -154,7 +167,8 @@
       // Lấy phần tử giao diện
       const loginContainer = document.getElementById("login-container");
       const videoCallContainer = document.getElementById("video-call");
-      const loginButton = document.getElementById("login-btn");
+      const googleLoginButton = document.getElementById("google-login-btn");
+      const facebookLoginButton = document.getElementById("facebook-login-btn");
       const exitButton = document.getElementById("exit-btn");
       const userList = document.getElementById("users");
       const videoFrame = document.getElementById("video-frame");
@@ -162,49 +176,34 @@
       let callFrame;
       let users = [];
 
-      // Kiểm tra xem có kết quả đăng nhập từ redirect không
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result?.user) {
-            handleLoginSuccess(result.user);
-          }
-        })
-        .catch((error) => {
-          console.error("❌ Redirect login error:", error);
-        });
-
-      // Đăng nhập với Google
-      loginButton.addEventListener("click", async () => {
+      // Đăng nhập Google
+      googleLoginButton.addEventListener("click", async () => {
         try {
-          if (/Mobi|Android/i.test(navigator.userAgent)) {
-            console.log("⚡ Mobile detected - Using Redirect");
-            signInWithRedirect(auth, googleProvider);
-          } else {
-            console.log("⚡ Desktop detected - Using Popup");
-            const result = await signInWithPopup(auth, googleProvider);
-            handleLoginSuccess(result.user);
-          }
+          const result = await signInWithPopup(auth, googleProvider);
+          handleLoginSuccess(result.user);
         } catch (error) {
-          console.error("❌ Login Error:", error);
-          alert(`Login failed: ${error.message}`);
+          console.error("❌ Google Login Error:", error);
+        }
+      });
+
+      // Đăng nhập Facebook
+      facebookLoginButton.addEventListener("click", async () => {
+        try {
+          const result = await signInWithPopup(auth, facebookProvider);
+          handleLoginSuccess(result.user);
+        } catch (error) {
+          console.error("❌ Facebook Login Error:", error);
         }
       });
 
       function handleLoginSuccess(user) {
-        console.log("✅ User Info:", user);
-
-        // Lưu tên người dùng
+        console.log("User Info:", user);
         const userName = user.displayName || "Guest";
-
-        // Cập nhật danh sách người dùng
         users.push(userName);
         updateUserList();
-
-        // Chuyển sang màn hình video call
         loginContainer.style.display = "none";
         videoCallContainer.style.display = "flex";
 
-        // Tạo iframe cho Daily.co
         callFrame = window.DailyIframe.createFrame(videoFrame, {
           showLeaveButton: false,
           iframeStyle: {
@@ -214,14 +213,12 @@
           },
         });
 
-        // Tham gia phòng video call
         callFrame.join({
           url: ROOM_URL,
           userName: userName,
         });
       }
 
-      // Thoát phòng video call
       exitButton.addEventListener("click", () => {
         if (callFrame) {
           callFrame.leave();
@@ -231,7 +228,6 @@
         loginContainer.style.display = "flex";
       });
 
-      // Cập nhật danh sách người dùng
       function updateUserList() {
         userList.innerHTML = "";
         users.forEach((user) => {
